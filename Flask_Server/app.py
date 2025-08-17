@@ -76,7 +76,7 @@ def run_flask(Ip, Port):
 
 if __name__ == '__main__':
     Port = 5000
-    IpAddress = ["192.168.137.1", "127.0.0.1", "192.168.1.1"]
+    IpAddress = ["0.0.0.0", "192.168.137.1", "127.0.0.1", "192.168.1.1"]
     for Ip in IpAddress:
         if run_flask(Ip, Port):
             break
