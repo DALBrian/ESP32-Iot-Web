@@ -6,7 +6,7 @@ A complete IoT project using an ESP32 (NodeMCU-32S) development board to collect
 
 ## Architecture
 
-[ESP32] --(via HTTP POST)--> [Flask API Server (Python)] --> [SQLite / CSV] --> [Web UI]
+[ESP32] --(via HTTPS POST)--> [Flask API Server (Python)] --> [SQLite / CSV] --> [Web UI]
 
 ### ESP32 Flowchart
 Overall process as below flowchart, including two processes: 1) Initialization. 2) Loop
@@ -23,7 +23,8 @@ Loop process responsible for reading temperature and himidity data, then send th
 
 - ESP32-based data acquisition using DHT22 sensor
 - Fetch sensor calibration data when system startup
-- Send temperature and humidity data via HTTP POST to Flask server
+- Send temperature and humidity data via HTTPS POST to Flask server
+- Encrypted communication using a self-signed TLS certificate
 - SQLite for simple and lightweight storage
 - REST API endpoints for data access
 - Chart.js front-end for real-time graph display

@@ -67,9 +67,9 @@ def run_flask(Ip, Port):
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.bind((Ip, Port))
-        print(f"[INFO] Flask Server running on: {Ip}:{Port}")
-        app.run(host=Ip, port=Port)
-        return True
+            print(f"[INFO] Flask Server running on: {Ip}:{Port}")
+            app.run(host=Ip, port=Port, ssl_context='adhoc')
+            return True
     except OSError as e:
         print(f"[ERROR] {Ip}:{Port} is not available to bind {e}")
         return False

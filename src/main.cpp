@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <WiFi.h>
+#include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 #include "DHT.h"
 #include <ArduinoJson.h>
@@ -20,8 +21,8 @@ Preferences Prefs;
 
 const char* ssid = "SWIFT14";
 const char* password = "77754321";
-const char* uploadServerUrl = "http://192.168.137.1:5000//upload";
-const char* calibrationServerUrl = "http://192.168.137.1:5000//api//calibration";
+const char* uploadServerUrl = "https://192.168.137.1:5000/upload";
+const char* calibrationServerUrl = "https://192.168.137.1:5000/api/calibration";
 
 
 static CalibrationData_T CalibrationData = {0};
@@ -56,8 +57,10 @@ static void saveHumidityCalibration(float humidityOffset)
 
 static void fetchCalibration(CalibrationData_T *RemotedCalibrationData)
 {
+  WiFiClientSecure client;
+  client.setInsecure();
   HTTPClient http;
-  http.begin(calibrationServerUrl);
+  http.begin(client, calibrationServerUrl);
   int httpCode = http.GET();
   if (httpCode == 200)
   {
@@ -162,8 +165,10 @@ void loop(void)
 #if SERIALPRINT_ENABLE
     Serial.printf("Temperature %.1f degree Celcius, Humidity: %.1f %%\n", temperature, humidity);
 #endif
-    HTTPClient http;
-    http.begin(uploadServerUrl);
+      WiFiClientSecure client;
+      client.setInsecure();
+      HTTPClient http;
+      http.begin(client, uploadServerUrl);
     temperature = temperature - CalibrationData.tempOffset;
     humidity = humidity - CalibrationData.humidityOffset;
 
@@ -171,8 +176,8 @@ void loop(void)
     String json = "{\"temperature\":" + String(temperature) + 
                   ",\"humidity\":" + String(humidity) + "}"; /* {temperature: value, humidity*: value} */
 
-    int httpResponse = http.POST(json);
-    http.end();
+      int httpResponse = http.POST(json);
+      http.end();
   }
   delay(2000);
 }
