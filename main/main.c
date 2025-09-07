@@ -12,6 +12,7 @@
 #include "protocol_examples_common.h"
 #include "mqtt_client.h"
 #include <time.h>
+#include "esp_task_wdt.h"
 
 #define MQTT_TOPIC "Test"
 
@@ -31,6 +32,7 @@ void DHT_task(void *pvParameter)
     static uint16_t seq = 0U;
     setDHTgpio(GPIO_NUM_25);
     ESP_LOGI(TAG, "Starting DHT Task\n\n");
+    ESP_ERROR_CHECK(esp_task_wdt_add(NULL));
 
     while (1)
     {
@@ -42,8 +44,6 @@ void DHT_task(void *pvParameter)
         float hum = getHumidity();
         float tmp = getTemperature();
         ESP_LOGI(TAG, "Hum: %.1f Tmp: %.1f", hum, tmp);
-
-        // esp_mqtt_client_publish(g_mqtt, "Test", "hello-from-esp32", 0, 1, 0);
 
         char ts[32];
         time_t now = time(NULL);
@@ -63,8 +63,14 @@ void DHT_task(void *pvParameter)
             ESP_LOGW(TAG, "MQTT not connected, skip publish");
         }
         ESP_LOGI(TAG, "DHT task high-water mark: %u bytes", uxTaskGetStackHighWaterMark(NULL));
+        ESP_ERROR_CHECK(esp_task_wdt_reset());
+
         vTaskDelay(2000 / portTICK_PERIOD_MS);
     }
+
+    esp_task_wdt_delete(NULL);
+    vTaskDelete(NULL);
+
 }
 
 static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
@@ -143,11 +149,9 @@ void app_main()
 {
     ESP_LOGI(TAG, "Startup...");
     ESP_LOGI(TAG, "Free memory: %" PRIu32 " bytes", esp_get_free_heap_size());
-
     esp_log_level_set("*", ESP_LOG_INFO);
     esp_log_level_set("mqtt_client", ESP_LOG_VERBOSE);
     esp_log_level_set("mqtt_example", ESP_LOG_VERBOSE);
-
     ESP_ERROR_CHECK(nvs_flash_init());
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
