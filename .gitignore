@@ -43,3 +43,13 @@ data.db
 
 #RTOS
 /firmware/build
+
+#Pre-Commit
+/node_modules/
+/web/node_modules/
+/web/.vite/
+/dist/
+/build/
+/.eslintcache
+/.prettiercache
+**/.cache/

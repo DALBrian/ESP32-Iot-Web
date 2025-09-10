@@ -11,7 +11,11 @@
     { "ts": "2025-09-07T01:23:30Z", "temp": 26.3, "hum": 61.0 },
     { "ts": "2025-09-07T01:23:45Z", "temp": 26.4, "hum": 61.2 }
   ],
-  "status": { "id": "esp32-001", "online": true, "updatedAt": "2025-09-07T01:23:45Z" },
+  "status": {
+    "id": "esp32-001",
+    "online": true,
+    "updatedAt": "2025-09-07T01:23:45Z"
+  },
   "errors": [
     { "id": "e1", "ts": "2025-09-07T00:50:00Z", "msg": "Sensor read timeout" },
     { "id": "e2", "ts": "2025-09-06T23:10:00Z", "msg": "WiFi reconnect" }

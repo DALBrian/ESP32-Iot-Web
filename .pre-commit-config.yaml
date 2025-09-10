@@ -1,0 +1,39 @@
+repos:
+  # --- Global small fixes ---
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: end-of-file-fixer
+        exclude: ^(firmware/components/dht22_lib/|firmware/components/protocol_examples_common/|node_modules/|web/node_modules/|dist/|build/|.*/\.cache/)
+      - id: trailing-whitespace
+        exclude: ^(firmware/components/dht22_lib/|firmware/components/protocol_examples_common/|node_modules/|web/node_modules/|dist/|build/|.*/\.cache/)
+
+  # --- Firmware (C/C++) ---
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v21.1.0
+    hooks:
+      - id: clang-format
+        files: ^firmware/.*\.(c|cpp|h|hpp)$
+        exclude: ^(firmware/components/dht22_lib/|firmware/components/protocol_examples_common/)
+
+  # --- Server (Python) ---
+  - repo: https://github.com/psf/black
+    rev: 25.1.0
+    hooks:
+      - id: black
+        files: ^server/.*\.py$
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.12.12
+    hooks:
+      - id: ruff
+        args: [--fix]
+        files: ^server/.*\.py$
+
+  # --- Web (JS/TS/JSON/YAML/Markdown) ---
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+      - id: prettier
+        files: ^web/.*\.(js|jsx|ts|tsx|json|yml|yaml|md|css|html|svg)$
+        exclude: ^(web/node_modules/|web/dist/|web/build/|web/.vite/|web/\.cache/)

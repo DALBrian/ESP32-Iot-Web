@@ -4,12 +4,12 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-  "dev": "concurrently \"vite\" \"json-server --watch mock.json --port 9000\"",
-  "dev:ui": "vite",
-  "mock": "json-server --watch mock.json --port 9000",
-  "build": "tsc -b && vite build",
-  "lint": "eslint .",
-  "preview": "vite preview"
+    "dev": "concurrently \"vite\" \"json-server --watch mock.json --port 9000\"",
+    "dev:ui": "vite",
+    "mock": "json-server --watch mock.json --port 9000",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
   },
   "dependencies": {
     "axios": "^1.11.0",
@@ -35,5 +35,3 @@
     "vite": "^7.1.2"
   }
 }
-
-

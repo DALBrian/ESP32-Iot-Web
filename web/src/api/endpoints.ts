@@ -1,6 +1,11 @@
 import { api } from "./client";
 import type { Latest, MetricPoint, Status, DeviceError } from "../types";
-import { LatestSchema, MetricsSchema, StatusSchema, ErrorsSchema } from "../schemas";
+import {
+  LatestSchema,
+  MetricsSchema,
+  StatusSchema,
+  ErrorsSchema,
+} from "../schemas";
 
 export async function fetchLatest(): Promise<Latest> {
   const { data } = await api.get("/latest");
