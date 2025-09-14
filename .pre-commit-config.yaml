@@ -4,9 +4,9 @@ repos:
     rev: v6.0.0
     hooks:
       - id: end-of-file-fixer
-        exclude: ^(firmware/components/dht22_lib/|firmware/components/protocol_examples_common/|node_modules/|web/node_modules/|dist/|build/|.*/\.cache/)
+        exclude: ^(firmware/components/dht22_lib/|firmware/components/protocol_examples_common/|node_modules/|web/node_modules/|dist/|build/|.*/\.cache/|web/\.vite/|\.venv/|server/\.venv/|server/.*\.egg-info/|.*__pycache__/)
       - id: trailing-whitespace
-        exclude: ^(firmware/components/dht22_lib/|firmware/components/protocol_examples_common/|node_modules/|web/node_modules/|dist/|build/|.*/\.cache/)
+        exclude: ^(firmware/components/dht22_lib/|firmware/components/protocol_examples_common/|node_modules/|web/node_modules/|dist/|build/|.*/\.cache/|web/\.vite/|\.venv/|server/\.venv/|server/.*\.egg-info/|.*__pycache__/)
 
   # --- Firmware (C/C++) ---
   - repo: https://github.com/pre-commit/mirrors-clang-format
@@ -22,6 +22,8 @@ repos:
     hooks:
       - id: black
         files: ^server/.*\.py$
+        exclude: ^server/.*\.egg-info/|^server/\.venv/|.*__pycache__/
+
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.12.12
@@ -29,6 +31,8 @@ repos:
       - id: ruff
         args: [--fix]
         files: ^server/.*\.py$
+        exclude: ^server/.*\.egg-info/|^server/\.venv/|.*__pycache__/
+
 
   # --- Web (JS/TS/JSON/YAML/Markdown) ---
   - repo: https://github.com/pre-commit/mirrors-prettier

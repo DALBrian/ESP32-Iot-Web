@@ -53,3 +53,16 @@ data.db
 /.eslintcache
 /.prettiercache
 **/.cache/
+
+#FastAPI
+server/*.egg-info/
+server/iot_server.egg-info/
+.venv/
+server/.venv/
+**/__pycache__/
+**/*.pyc
+
+# VSCode / OS
+.vscode/
+.DS_Store
+Thumbs.db

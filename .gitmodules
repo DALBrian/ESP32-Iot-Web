@@ -1,3 +1,0 @@
-[submodule "Library/dht_sensor_library"]
-	path = Library/dht_sensor_library
-	url = https://github.com/adafruit/DHT-sensor-library.git

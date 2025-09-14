@@ -1,0 +1,18 @@
+[project]
+name = "iot-server"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+  "fastapi",
+  "uvicorn[standard]",
+  "pydantic-settings",
+  "paho-mqtt",
+  "httpx",
+  "pytest",
+]
+
+[tool.uvicorn]
+factory = false
+
+[tool.pytest.ini_options]
+addopts = "-q"
