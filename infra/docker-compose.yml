@@ -1,0 +1,18 @@
+services:
+  postgres:
+    image: postgres:16
+    environment: [POSTGRES_PASSWORD=devpw, POSTGRES_USER=dev, POSTGRES_DB=iot]
+    ports: ["5432:5432"]
+    volumes: ["pg:/var/lib/postgresql/data"]
+  mosquitto:
+    image: eclipse-mosquitto:2
+    ports: ["1883:1883"]
+    volumes: ["./mosquitto.conf:/mosquitto/config/mosquitto.conf"]
+  app:
+    build: ../server
+    environment:
+      - DATABASE_URL=postgresql+psycopg://dev:devpw@postgres:5432/iot
+      - MQTT_BROKER=mosquitto
+    depends_on: [postgres, mosquitto]
+    ports: ["8000:8000"]
+volumes: { pg: {} }
