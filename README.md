@@ -74,6 +74,25 @@ Loop process responsible for reading temperature and himidity data, then send th
 - VSCode with PlatformIO IDE plugin(Version: 3.3.4)
 - PlatformIO IDE library: DHT sensor library by Adafruit(Version: 1.4.6)
 - Docker
+- Docker Compose
+
+## Development with Docker
+
+The repository ships with a multi-service Compose stack that provisions Postgres, Mosquitto, the FastAPI backend, and the React dashboard with a single command. This ensures every contributor shares the same versions of the broker, API, and web UI.
+
+```bash
+cd infra
+docker compose up --build
+```
+
+The services expose the following host ports:
+
+- `8000` – FastAPI application (`http://localhost:8000`)
+- `5173` – React development server (`http://localhost:5173`)
+- `1883` – Mosquitto MQTT broker
+
+Code changes in the `server/` and `web/` directories are mounted into their respective containers, so hot reloading works out of the box for FastAPI (`uvicorn --reload`) and the Vite dev server.
+
 ---
 
 ## Project Structure
