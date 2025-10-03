@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.orm import declarative_base, sessionmaker
+
+from .settings import settings
 
 engine = create_engine(
-    "postgresql+psycopg://dev:devpw@127.0.0.1:5432/iot",
-    pool_size=10,
-    max_overflow=20,
+    settings.DATABASE_URL,
     pool_pre_ping=True,
 )
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
