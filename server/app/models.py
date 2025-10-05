@@ -1,13 +1,6 @@
-from sqlalchemy import (
-    Column,
-    Integer,
-    String,
-    Float,
-    BigInteger,
-    ForeignKey,
-    Index,
-    text,
-)
+from datetime import datetime, timezone
+
+from sqlalchemy import BigInteger, Column, Float, ForeignKey, Index, Integer, String
 from .db import Base
 
 
@@ -20,7 +13,7 @@ class Device(Base):
 
 class Telemetry(Base):
     __tablename__ = "telemetry"
-    id = Column(BigInteger, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     device_id = Column(
         String(100), ForeignKey("devices.device_id", ondelete="CASCADE"), nullable=False
     )
@@ -35,11 +28,11 @@ class Telemetry(Base):
 
 class IngestError(Base):
     __tablename__ = "errors"
-    id = Column(BigInteger, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     device_id = Column(String(100), nullable=True)
     ts = Column(
         BigInteger,
         nullable=False,
-        server_default=text("EXTRACT(EPOCH FROM NOW())::bigint"),
+        default=lambda: int(datetime.now(tz=timezone.utc).timestamp()),
     )
     reason = Column(String(500), nullable=False)

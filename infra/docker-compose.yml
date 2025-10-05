@@ -15,4 +15,14 @@ services:
       - MQTT_BROKER=mosquitto
     depends_on: [postgres, mosquitto]
     ports: ["8000:8000"]
+  web:
+    image: node:20
+    working_dir: /app
+    volumes: ["../web:/app"]
+    command: ["sh", "-c", "npm install && npx concurrently -n vite,json \"vite --host 0.0.0.0 --port 55080\" \"json-server --host 0.0.0.0 --watch mock.json --port 9000\""]
+    environment: ["WEB_PORT=55080"]
+    ports:
+      - "127.0.0.1:55080:55080"
+      - "127.0.0.1:9000:9000"
+
 volumes: { pg: {} }

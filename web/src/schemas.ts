@@ -12,7 +12,7 @@ export const LatestSchema = MetricPointSchema.extend({
 export const StatusSchema = z.object({
   id: z.string(),
   online: z.boolean(),
-  updatedAt: z.string(),
+  updatedAt: z.string().nullable(),
 });
 export const ErrorSchema = z.object({
   id: z.string(),
