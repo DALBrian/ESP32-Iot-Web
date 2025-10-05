@@ -76,26 +76,6 @@ Loop process responsible for reading temperature and himidity data, then send th
 - Docker
 ---
 
-## Docker development environment
-
-The services defined in `infra/docker-compose.yml` can be started with `docker compose` for local development. By default the Vite web UI is exposed on host port `5173`, but you can override that value by setting the `WEB_PORT` environment variable when launching the stack, for example:
-
-```bash
-WEB_PORT=5174 docker compose -f infra/docker-compose.yml up web
-```
-
-```powershell
-$Env:WEB_PORT = '5174'
-docker compose -f infra/docker-compose.yml up web
-```
-
-If you prefer, you can also create an `.env` file alongside `infra/docker-compose.yml` containing `WEB_PORT=5174` so Compose picks up the override automatically.
-
-> **Note for Windows users:** use a port that is not listed as excluded by `netsh interface ipv4 show excludedportrange protocol=tcp` to avoid conflicts with the operating system’s reserved ranges.
-
-
----
-
 ## Project Structure
 
 ```
