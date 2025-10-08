@@ -19,3 +19,8 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def init_db() -> None:
+    """Create database tables if they do not already exist."""
+    Base.metadata.create_all(bind=engine)

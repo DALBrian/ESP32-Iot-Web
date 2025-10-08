@@ -133,34 +133,31 @@ class MQTTIngestService:
             logger.info("MQTT disconnected")
 
     def _on_message(self, _client: mqtt.Client, _userdata, message: mqtt.MQTTMessage):
-        payload = message.payload.decode("utf-8", errors="ignore")
-        logger.debug("Received MQTT message topic=%s payload=%s", message.topic, payload)
+        raw = message.payload
+        try:
+            payload = raw.decode("utf-8", errors="strict")
+        except UnicodeDecodeError as e:
+            logger.error("[MQTT] UTF-8 decode error: %s; HEX=%s", e, raw.hex())
+            self._persist_error("non-utf8 payload", None)
+            return
+
+        logger.warning("[MQTT] topic=%s payload=%s", message.topic, payload)
 
         try:
             data = json.loads(payload)
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as e:
+            logger.error("[MQTT] JSON decode error: %s; HEX=%s", e, raw.hex())
             self._persist_error("invalid JSON payload", None)
             return
-
-        device_id = (
-            str(
-                data.get("deviceId")
-                or data.get("device_id")
-                or self._default_device_id
-                or message.topic
-            )
-        )
+        device_id = data.get("deviceId") or data.get("device_id")
+        if not isinstance(device_id, str) or not device_id:
+            self._persist_error("missing or invalid deviceId", None)
+            return
 
         try:
             ts = _parse_timestamp(data.get("ts"))
-            temperature = float(
-                data.get("temperature")
-                or data.get("temp")
-                or data.get("temp_c")
-            )
-            humidity = float(
-                data.get("humidity") or data.get("hum") or data.get("hum_pct")
-            )
+            temperature = float(data.get("temperature"))
+            humidity = float(data.get("humidity"))
         except (TypeError, ValueError) as exc:
             self._persist_error(str(exc), device_id)
             return

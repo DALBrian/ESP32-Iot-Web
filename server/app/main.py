@@ -12,7 +12,7 @@ from pydantic import BaseModel
 from sqlalchemy import desc, func, select
 from sqlalchemy.orm import Session
 
-from .db import get_db
+from .db import get_db, init_db
 from .models import IngestError, Telemetry
 from .mqtt import mqtt_service
 from .services import persist_telemetry
@@ -42,8 +42,8 @@ ONLINE_DELTA = timedelta(seconds=settings.ONLINE_GRACE_SECONDS)
 
 
 def _to_iso(ts: int) -> str:
-    return datetime.fromtimestamp(ts, tz=timezone.utc).isoformat().replace(
-        "+00:00", "Z"
+    return (
+        datetime.fromtimestamp(ts, tz=timezone.utc).isoformat().replace("+00:00", "Z")
     )
 
 
@@ -53,6 +53,7 @@ def _resolve_device(device_id: Optional[str]) -> str:
 
 @app.on_event("startup")
 def _startup() -> None:
+    init_db()
     mqtt_service.start()
 
 
@@ -76,23 +77,18 @@ def ingest(t: TelemetryIn, db: Session = Depends(get_db)):
 @app.get("/latest")
 def latest(deviceId: Optional[str] = None, db: Session = Depends(get_db)):
     device_id = _resolve_device(deviceId)
-    row = (
-        db.execute(
-            select(Telemetry)
-            .where(Telemetry.device_id == device_id)
-            .order_by(desc(Telemetry.ts))
-            .limit(1)
-        )
-        .scalar_one_or_none()
-    )
+    row = db.execute(
+        select(Telemetry)
+        .where(Telemetry.device_id == device_id)
+        .order_by(desc(Telemetry.ts))
+        .limit(1)
+    ).scalar_one_or_none()
     if not row:
         raise HTTPException(status_code=404, detail="no data")
 
     ts_iso = _to_iso(row.ts)
     now = datetime.now(tz=timezone.utc)
-    is_online = now - datetime.fromtimestamp(
-        row.ts, tz=timezone.utc
-    ) <= ONLINE_DELTA
+    is_online = now - datetime.fromtimestamp(row.ts, tz=timezone.utc) <= ONLINE_DELTA
 
     return {
         "id": device_id,
@@ -135,15 +131,12 @@ def metrics(
 @app.get("/status")
 def status(deviceId: Optional[str] = None, db: Session = Depends(get_db)):
     device_id = _resolve_device(deviceId)
-    row = (
-        db.execute(
-            select(Telemetry.ts)
-            .where(Telemetry.device_id == device_id)
-            .order_by(desc(Telemetry.ts))
-            .limit(1)
-        )
-        .scalar_one_or_none()
-    )
+    row = db.execute(
+        select(Telemetry.ts)
+        .where(Telemetry.device_id == device_id)
+        .order_by(desc(Telemetry.ts))
+        .limit(1)
+    ).scalar_one_or_none()
 
     if row is None:
         return {"id": device_id, "online": False, "updatedAt": None}
