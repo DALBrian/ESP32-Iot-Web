@@ -3,7 +3,7 @@ flowchart LR
     subgraph ESP32 [ESP32 Node]
         Sensor[DHT22 Sensor] --> SensorTask
         SensorTask["FreeRTOS Task: sensor_task"] --> Queue
-        NetTask["FreeRTOS Task: net_publish_task"] --> MQTTClient
+        NetTask["FreeRTOS Task: net_publish_task"] --> Mosquitto
         Watchdog["watchdog_task"] -.-> SensorTask
         Watchdog -.-> NetTask
         Queue --> NetTask
@@ -13,23 +13,19 @@ flowchart LR
     subgraph Server [Backend Server]
         Mosquitto --> Bridge[MQTT → FastAPI Bridge]
         Bridge --> API[FastAPI /ingest]
-        API --> DB[(Postgres)]
-        API --> Metrics["/metrics (Prometheus)"]
+        API --> DB[(PostgreSQL )]
     end
 
     subgraph Web [React Dashboard]
         Browser --> UI[Charts + Status]
-        UI --> API["FastAPI /latest"]
-        UI --> Metrics
+        UI --> DB
     end
 ```
 
-
-
-
 # NodeMCU-32S-Iot-Web
 
-A complete IoT project using an ESP32 (NodeMCU-32S) development board to collect temperature and humidity data from a DHT22 temperature & humidity sensor and send it to a Flask-based web server. The data is stored in a SQLite database and visualized on a web dashboard using Chart.js.
+A full-stack IoT system that integrates an ESP32 node, a FastAPI backend, and a React-based dashboard for real-time environmental monitoring.
+The ESP32 periodically collects sensor data (temperature, humidity) and publishes it to an MQTT broker. The backend processes, stores, and exposes data via REST APIs and Prometheus metrics, while the web dashboard visualizes live and historical readings.
 
 ---
 
@@ -37,48 +33,43 @@ A complete IoT project using an ESP32 (NodeMCU-32S) development board to collect
 
 [ESP32] --(via HTTPS POST)--> [Flask API Server (Python)] --> [SQLite / CSV] --> [Web UI]
 
-### ESP32 Flowchart
-Overall process as below flowchart, including two processes: 1) Initialization. 2) Loop
-![Overall](Flask_Server/image/Overall.png)
+### ESP32 Sequence
+Overall process is shown as below flowchart
+<!-- TBD: Add image -->
 
-Initialization process starts WiFI, DHT sensor and HTTP modules. Also, it will fetch calibration if available.
-![Initialization](Flask_Server/image/Init.png)
+Initialization process include connecting WiFI, starting DHT sensor and MQTT modules.
+<!-- TBD: Add image -->
 
-Loop process responsible for reading temperature and himidity data, then send the data to Flask server.
-![Loop](Flask_Server/image/Loop.png)
-
+Sensor_Task responsible for reading temperature & humidity from DHT22 and send reading via MQTT every 2000 ms.
+<!-- TBD: Add image -->
 ---
 ## Features
 
 - ESP32-based data acquisition using DHT22 sensor
-- Fetch sensor calibration data when system startup
-- Send temperature and humidity data via HTTPS POST to Flask server
-- Encrypted communication using a self-signed TLS certificate
-- SQLite for simple and lightweight storage
-- REST API endpoints for data access
-- Chart.js front-end for real-time graph display
+- Send temperature and humidity data via MQTT to FastAPI server
+- PostgreSQL  for sensor data storage
+- React & Vite front-end for real-time graph display
 
 ---
 
 ## Hardware Requirements
 
 - NodeMCU-32S (ESP32 Dev Board)
-- DHT22(or DHT11) sensor module
+- DHT22 sensor module
 - Jumper wires
 - Micro USB cable
-
+- Personal PC
+- WiFi AP
 ---
 
 ## Software Requirements
 
-- VSCode with PlatformIO IDE plugin(Version: 3.3.4)
-- PlatformIO IDE library: DHT sensor library by Adafruit(Version: 1.4.6)
+- VSCode with ESP-IDF (v6.0)
 - Docker
-- Docker Compose
 
 ## Development with Docker
 
-The repository ships with a multi-service Compose stack that provisions Postgres, Mosquitto, the FastAPI backend, and the React dashboard with a single command. This ensures every contributor shares the same versions of the broker, API, and web UI.
+The repository ships with a multi-service Compose stack that provisions PostgreSQL , Mosquitto, the FastAPI backend, and the React dashboard with a single command. This ensures every contributor shares the same versions of the broker, API, and web UI.
 
 ```bash
 cd infra
@@ -86,10 +77,10 @@ docker compose up --build
 ```
 
 The services expose the following host ports:
-
-- `8000` – FastAPI application (`http://localhost:8000`)
-- `5173` – React development server (`http://localhost:5173`)
 - `1883` – Mosquitto MQTT broker
+- `5173` – React development server (`http://localhost:5173`)
+- `5432` – PostgreSQL Database
+- `8000` – FastAPI application (`http://localhost:8000`)
 
 Code changes in the `server/` and `web/` directories are mounted into their respective containers, so hot reloading works out of the box for FastAPI (`uvicorn --reload`) and the Vite dev server.
 
@@ -98,18 +89,23 @@ Code changes in the `server/` and `web/` directories are mounted into their resp
 ## Project Structure
 
 ```
-NodeMCU-32S-Iot-Web/
-├── src/                  # Arduino code for ESP32 (PlatformIO compatible)
-│
-├── Flask_Server/         # Web server
-│   ├── app.py            # Server main program
-│   ├── data.db           # Auto-generated by Flask framework
-│   ├── templates/
-│   │   └── index.html
-│   └── static/
-│       └── script.js
-├── README.md
-└── platformio.ini
+ESP32-IoT-Web/
+├── firmware/           # ESP32 (ESP-IDF / FreeRTOS)
+│   ├── main/
+│   ├── components/
+│   └── CMakeLists.txt
+├── server/             # FastAPI backend
+│   ├── app/
+|   ├── tests/
+│   ├── pyproject.toml
+│   └── Dockerfile
+├── web/                # React dashboard (Vite + Chart.js)
+│   ├── src/
+│   └── package.json
+├── infra/              # Docker Compose stack (broker + db + services)
+│   ├── docker-compose.yml
+    └── mosquitto.conf
+└── README.md
 ```
 ---
 
@@ -131,9 +127,10 @@ NodeMCU-32S-Iot-Web/
 6. Use web browser to open server webpage to explore history data and upload sensor calibration data.
 
 ---
+## Output
+After the docker-compose is deployed, use web browser to connect to `localhost:5173` and it should looks like this image
+![WebPage](image/WebPage.png)
 
-## API Endpoints
-1. TBD
 
 ---
 
@@ -151,18 +148,11 @@ NodeMCU-32S-Iot-Web/
 
 ---
 
-## To Be Done List:
-### ESP-32
-1. Seperate functions into libraries for better maintenance.
-3. Use watchdog for system monitoring.
-4. Add recover mechaism when Wi-Fi failure or power lost.
-5. Sensor calibration mechanism.(ongoing)
-
-### Flask
-1. Dockerlized Flask server.
-
+## Future Improvements
+1. OTA firmware updates for remote devices
+2. Role-based authentication for API access
+3. Historical data export / analytics modules
 ---
 
 ## License
-
 MIT License. Feel free to use and modify this project for your personal or academic purposes.
