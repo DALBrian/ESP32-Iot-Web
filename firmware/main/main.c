@@ -49,8 +49,9 @@ void DHT_task(void* pvParameter) {
 
     char payload[160];
     int n = snprintf(payload, sizeof(payload),
-                     "{\"ts\":\"%s\",\"temp_c\":%.2f,\"hum_pct\":%.2f,\"seq\":%u}", ts, tmp, hum,
-                     seq++);
+                     "{\"deviceId\":\"esp32-1\",\"ts\":\"%s\",\"temperature\":%.2f,\"humidity\":%."
+                     "2f,\"seq\":%u}",
+                     ts, tmp, hum, seq++);
 
     if (g_mqtt && g_mqtt_connected && n > 0) {
       int msg_id = esp_mqtt_client_publish(g_mqtt, MQTT_TOPIC, payload, 0, 1, 0);
@@ -58,7 +59,6 @@ void DHT_task(void* pvParameter) {
     } else {
       ESP_LOGW(TAG, "MQTT not connected, skip publish");
     }
-    ESP_LOGI(TAG, "DHT task high-water mark: %u bytes", uxTaskGetStackHighWaterMark(NULL));
     ESP_ERROR_CHECK(esp_task_wdt_reset());
 
     vTaskDelay(2000 / portTICK_PERIOD_MS);

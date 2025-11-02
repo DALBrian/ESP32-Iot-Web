@@ -18,10 +18,9 @@ def persist_telemetry(
 ) -> Telemetry:
     """Insert a telemetry record and ensure the device exists."""
 
-    dev = (
-        db.execute(select(Device).where(Device.device_id == device_id))
-        .scalar_one_or_none()
-    )
+    dev = db.execute(
+        select(Device).where(Device.device_id == device_id)
+    ).scalar_one_or_none()
     if not dev:
         dev = Device(device_id=device_id)
         db.add(dev)

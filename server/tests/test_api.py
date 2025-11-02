@@ -40,9 +40,7 @@ def test_errors_endpoint_returns_recent_entries(client, db_session):
 
 def test_status_becomes_offline_when_stale(client):
     device_id = "esp32-offline"
-    stale_ts = int(
-        (datetime.now(tz=timezone.utc) - timedelta(minutes=10)).timestamp()
-    )
+    stale_ts = int((datetime.now(tz=timezone.utc) - timedelta(minutes=10)).timestamp())
     client.post(
         "/ingest",
         json={

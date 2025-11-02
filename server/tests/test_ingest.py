@@ -34,7 +34,9 @@ def test_latest_and_metrics(client):
     assert body["id"] == device_id
     assert body["temp"] == 22.7 and body["hum"] == 42
     assert body["online"] is True
-    assert _iso_to_dt(body["ts"]) <= datetime.now(tz=timezone.utc) + timedelta(seconds=5)
+    assert _iso_to_dt(body["ts"]) <= datetime.now(tz=timezone.utc) + timedelta(
+        seconds=5
+    )
 
     metrics = client.get("/metrics", params={"deviceId": device_id}).json()
     assert [point["temp"] for point in metrics] == [22.2, 22.5, 22.7]

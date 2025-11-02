@@ -1,5 +1,5 @@
 # Test FastAPI-Postgres
-Send `curl.exe -X POST "http://localhost:8000/ingest"  -H "Content-Type: application/json"  -d '{\"deviceId\":\"esp32-test\",\"ts\":1727851200,\"temperature\":25.6,\"humidity\":60.1}'`
+Send `curl.exe -X POST "http://localhost:8000/ingest"  -H "Content-Type: application/json"  -d '{\"deviceId\":\"esp32-sim-1\",\"ts\":1727851200,\"temperature\":25.6,\"humidity\":60.1}'`
 Data should add to Postgres and use below bash to monitor the data in the table `telemetry`
 `docker compose exec postgres psql -U dev -d iot -c "SELECT id, device_id, ts, temperature, humidity FROM telemetry ORDER BY id DESC LIMIT 5;"`
 
