@@ -1,3 +1,42 @@
+# ESP32-Iot-Web
+
+A full-stack IoT system that integrates an ESP32 node, a FastAPI backend, and a React-based dashboard for real-time environmental monitoring.
+The ESP32 periodically collects sensor data (temperature, humidity) and publishes it to an MQTT broker. The backend processes, stores, and exposes data via REST APIs and Prometheus metrics, while the web dashboard visualizes live and historical readings.
+
+---
+# Features
+
+- ESP32-based data acquisition using DHT22 sensor
+- Send temperature and humidity data via MQTT to FastAPI server
+- PostgreSQL  for sensor data storage
+- React & Vite front-end for real-time graph display
+
+---
+## Project Structure
+
+```
+ESP32-IoT-Web/
+├── firmware/           # ESP32 (ESP-IDF / FreeRTOS)
+│   ├── main/
+│   ├── components/
+│   └── CMakeLists.txt
+├── server/             # FastAPI backend
+│   ├── app/
+|   ├── tests/
+│   ├── pyproject.toml
+│   └── Dockerfile
+├── web/                # React dashboard (Vite + Chart.js)
+│   ├── src/
+│   └── package.json
+├── infra/              # Docker Compose stack (broker + db + services)
+│   ├── docker-compose.yml
+    └── mosquitto.conf
+└── README.md
+```
+
+---
+# System Diagram
+
 ```mermaid
 flowchart LR
     subgraph ESP32 [ESP32 Node]
@@ -22,63 +61,46 @@ flowchart LR
     end
 ```
 
-# NodeMCU-32S-Iot-Web
-
-A full-stack IoT system that integrates an ESP32 node, a FastAPI backend, and a React-based dashboard for real-time environmental monitoring.
-The ESP32 periodically collects sensor data (temperature, humidity) and publishes it to an MQTT broker. The backend processes, stores, and exposes data via REST APIs and Prometheus metrics, while the web dashboard visualizes live and historical readings.
-
 ---
-
-## Architecture
-
-[ESP32] --(via HTTPS POST)--> [Flask API Server (Python)] --> [SQLite / CSV] --> [Web UI]
-
-### ESP32 Sequence
-Overall process is shown as below flowchart
-<!-- TBD: Add image -->
-
+# ESP32 Sequence
 Initialization process include connecting WiFI, starting DHT sensor and MQTT modules.
 <!-- TBD: Add image -->
 
 Sensor_Task responsible for reading temperature & humidity from DHT22 and send reading via MQTT every 2000 ms.
 <!-- TBD: Add image -->
 ---
-## Features
 
-- ESP32-based data acquisition using DHT22 sensor
-- Send temperature and humidity data via MQTT to FastAPI server
-- PostgreSQL  for sensor data storage
-- React & Vite front-end for real-time graph display
-
----
-
+# Requirements
 ## Hardware Requirements
 
-- NodeMCU-32S (ESP32 Dev Board)
+- ESP32-S2 (or NodeMCU-32S Dev Board)
 - DHT22 sensor module
 - Jumper wires
 - Micro USB cable
 - Personal PC
 - WiFi AP
+
 ---
 
 ## Software Requirements
 
-- VSCode with ESP-IDF (v6.0)
+- VSCode with ESP-IDF (v6.0.0)
 - Docker
 
+# Environment
 ## Development with Docker
 
-The repository ships with a multi-service Compose stack that provisions PostgreSQL , Mosquitto, the FastAPI backend, and the React dashboard with a single command. This ensures every contributor shares the same versions of the broker, API, and web UI.
+The repository ships with a multi-service Compose stack that provisions PostgreSQL , Mosquitto, the FastAPI backend, and the React dashboard with a single command. This ensures every contributor shares the same versions of the broker, API, and Web UI.
 
 ```bash
 cd infra
 docker compose up --build
 ```
 
-The services expose the following host ports:
+## Ports
+The services expose the following ports:
 - `1883` – Mosquitto MQTT broker
-- `5173` – React development server (`http://localhost:5173`)
+- `50080` – Web server (`http://localhost:50080`)
 - `5432` – PostgreSQL Database
 - `8000` – FastAPI application (`http://localhost:8000`)
 
@@ -86,50 +108,44 @@ Code changes in the `server/` and `web/` directories are mounted into their resp
 
 ---
 
-## Project Structure
-
-```
-ESP32-IoT-Web/
-├── firmware/           # ESP32 (ESP-IDF / FreeRTOS)
-│   ├── main/
-│   ├── components/
-│   └── CMakeLists.txt
-├── server/             # FastAPI backend
-│   ├── app/
-|   ├── tests/
-│   ├── pyproject.toml
-│   └── Dockerfile
-├── web/                # React dashboard (Vite + Chart.js)
-│   ├── src/
-│   └── package.json
-├── infra/              # Docker Compose stack (broker + db + services)
-│   ├── docker-compose.yml
-    └── mosquitto.conf
-└── README.md
-```
----
-
 ## Getting Started
+### ESP32
+1. Open `firmware` folder using ESP-IDF or VS code with ESP-IDF extension. (This project use ESP-IDF v6.0.0)
+2. Open `firmware\sdkconfig`.
+3. Modify `CONFIG_EXAMPLE_WIFI_SSID` to your WiFi SSID.
+4. Modify `CONFIG_EXAMPLE_WIFI_PASSWORD` to your WiFi password.
+5. Modify `CONFIG_BROKER_URL` to your MQTT broker.
+6. Connect sensor to ESP32 board.
+7. Connect ESP32 to computer.
+8. Select Port to ESP32 to upload code.
+9. Select device to `esp32`
+10. Click `Flash Device` (or `Build, Flash and Monitor`)
+11. ESP-IDF Console will show successfully build and flash.
+12. If WiFI is connected and sensor works normally, console will looks like this
 
-### ESP32 (PlatformIO)
-1. Open `esp32` folder with PlatformIO.
-2. Modify `WiFiCredential.c` with your WiFi credentials and server IP.
-3. Upload code to NodeMCU-32S via USB.
-4. Use Serial Monitor to verify transmission.
+``` text
+I (8647) Project: NodeMCU-32S-Iot: === Reading DHT ===
+I (8647) Project: NodeMCU-32S-Iot: Hum: 84.0 Tmp: 26.5
+I (8657) Project: NodeMCU-32S-Iot: MQTT publish [Test] id=19035 payload={"deviceId":"esp32-1","ts":"2025-10-20T00:00:08Z","temperature":26.50,"humidity":84.00,"seq":1}
+I (8657) Project: NodeMCU-32S-Iot: DHT task high-water mark: 2060 bytes
+```
 
-### Flask Server
-## Using virtual environment
-1. Open terminal or powershell
-2. Create a virtual environment name "venv" `python -m venv venv`
-3. Open the environment `.\venv\Scripts\activate`
-4. Install flask dependency `pip install flask`
-5. Run server `python app.py`
-6. Use web browser to open server webpage to explore history data and upload sensor calibration data.
+### Web
+1. Install docker in your computer.
+2. cd `infra`
+3. `docker compose up` and wait for a while
+4. Console will show each container startup successfully (mosquitto-1, postgres-1, app-1, web-1)
+5. Console will show below message if receive MQTT message
+``` text
+app-1        | [MQTT] topic=Test payload={"deviceId":"esp32-1","ts":"2025-10-20T00:00:08Z","temperature":26.50,"humidity":84.00,"seq":1}
+```
+6. Use web brower to open `http://localhost:50080` to check visualization sensor data.
+7. Use `docker-compose down` to shutdown all docker container. (or `docker-compose down -v` to shutdown and remove all data.)
 
 ---
 ## Output
-After the docker-compose is deployed, use web browser to connect to `localhost:5173` and it should looks like this image
-![WebPage](image/WebPage.png)
+After the docker-compose is deployed, use web browser to connect to `localhost:50080` and it should looks like this image
+![web page](images/WebPage.png)
 
 
 ---
