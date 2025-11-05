@@ -1,0 +1,29 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  integration:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Compose up
+      run: |
+            docker compose -f infra/docker-compose.yml up -d --build
+            sleep 10
+            docker compose -f infra/docker-compose.yml ps
+    - name: Smoke Test
+      run: |
+           curl -f "http://localhost:8000/status" || exit 1
+           curl -f "http://localhost:8000/metrics?limit=1" || exit 1
+    
+    - name: Teardown
+      if: always()
+      run: |
+            docker compose -f infra/docker-compose.yml down -v
