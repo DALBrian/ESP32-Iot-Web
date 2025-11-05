@@ -106,6 +106,16 @@ The services expose the following ports:
 
 Code changes in the `server/` and `web/` directories are mounted into their respective containers, so hot reloading works out of the box for FastAPI (`uvicorn --reload`) and the Vite dev server.
 
+## MQTT Message Structure
+Below is the MQTT message structure
+|  Name  | Type  |
+|  ----  | ----  |
+| deviceID  | Char |
+| ts  | Timestamp |
+| temperature  | float |
+| humidity  | float |
+| seq  | int |
+
 ---
 
 ## Getting Started
