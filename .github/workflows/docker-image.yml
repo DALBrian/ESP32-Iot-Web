@@ -17,7 +17,7 @@ jobs:
       run: |
             docker compose -f infra/docker-compose.yml up -d --build
             sleep 10
-            docker compose ps
+            docker compose -f infra/docker-compose.yml ps
     - name: Smoke Test
       run: |
            curl -f "http://localhost:8000/status" || exit 1
@@ -25,4 +25,5 @@ jobs:
     
     - name: Teardown
       if: always()
-      run: docker compose -f infra/docker-compose.yml down -v
+      run: |
+            docker compose -f infra/docker-compose.yml down -v
