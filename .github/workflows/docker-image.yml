@@ -20,7 +20,7 @@ jobs:
             docker compose -f infra/docker-compose.yml ps
 
     - name: Wait for API ready
-        run: |
+      run: |
           set -euo pipefail
           echo "Waiting for FastAPI server ..."
           for i in $(seq 1 90); do
