@@ -16,21 +16,21 @@ jobs:
     - name: Compose up
       run: |
             docker compose -f infra/docker-compose.yml up -d --build
-            sleep 10
+            sleep 5
             docker compose -f infra/docker-compose.yml ps
 
     - name: Wait for API ready
-        run: |
+      run: |
           set -euo pipefail
           echo "Waiting for FastAPI server ..."
           for i in $(seq 1 90); do
             if curl -fsS http://localhost:8000/status >/dev/null; then
-              echo "Server is up"
+              echo "Server is up."
               break
             fi
             sleep 1
             if [ $i -eq 90 ]; then
-              echo "Server timedout"
+              echo "Server Timedout"
               exit 1
             fi
           done
@@ -39,6 +39,25 @@ jobs:
       run: |
            curl -f "http://localhost:8000/status" || exit 1
            curl -f "http://localhost:8000/metrics?limit=1" || exit 1
+
+
+    - name: Verify FastAPI Ingest and DB 
+      run : |
+            echo "Sending Ingest Request"
+            curl -f -X POST "http://localhost:8000/ingest" \
+            -H "Content-Type: application/json" \
+            -d '{"deviceId":"esp32-sim-1","ts":1727851200,"temperature":25.6,"humidity":60.1}' \
+            | tee result.json
+            echo "Check return result"
+            grep -q '"ok":true' result.json && echo "Ingest returned ok:true"
+
+            echo "Checking DB"
+            docker compose -f infra/docker-compose.yml exec -T postgres \
+            psql -U dev -d iot -c \
+            "SELECT id, device_id, ts, temperature, humidity FROM telemetry ORDER BY id DESC LIMIT 1;" \
+            | tee db_output.txt
+            grep -q 'esp32-sim-1' db_output.txt && echo "Saving DB successful." || (echo "Saving DB fail." && exit 1)
+
 
     - name: Teardown
       if: always()
