@@ -8,14 +8,19 @@
 #include "esp_event.h"
 #include "esp_log.h"
 #include "esp_netif.h"
+#include "esp_netif_sntp.h"
+#include "esp_sntp.h"
 #include "esp_system.h"
 #include "esp_task_wdt.h"
 #include "freertos/event_groups.h"
+#include "lwip/ip_addr.h"
 #include "mqtt_client.h"
 #include "nvs_flash.h"
 #include "protocol_examples_common.h"
-
 #define MQTT_TOPIC "Test"
+#ifndef INET6_ADDRSTRLEN
+#define INET6_ADDRSTRLEN 48
+#endif
 
 static const char* TAG = "Project: NodeMCU-32S-Iot";
 
@@ -25,10 +30,11 @@ static esp_mqtt5_user_property_item_t user_property_arr[] = {
     {"board", "esp32"}, {"u", "user"}, {"p", "password"}};
 
 #define USE_PROPERTY_ARR_SIZE sizeof(user_property_arr) / sizeof(esp_mqtt5_user_property_item_t)
+
 void DHT_task(void* pvParameter) {
   static uint16_t seq = 0U;
   setDHTgpio(GPIO_NUM_25);
-  ESP_LOGI(TAG, "Starting DHT Task\n\n");
+  ESP_LOGI(TAG, "Starting DHT Task \n");
   ESP_ERROR_CHECK(esp_task_wdt_add(NULL));
 
   while (1) {
@@ -141,6 +147,29 @@ static void mqtt5_app_start(void) {
   esp_mqtt_client_start(client);
 }
 
+static void print_servers(void) {
+  ESP_LOGI(TAG, "List of configured NTP servers:");
+
+  for (uint8_t i = 0; i < SNTP_MAX_SERVERS; ++i) {
+    if (esp_sntp_getservername(i)) {
+      ESP_LOGI(TAG, "server %d: %s", i, esp_sntp_getservername(i));
+    } else {
+      // we have either IPv4 or IPv6 address, let's print it
+      char buff[INET6_ADDRSTRLEN];
+      ip_addr_t const* ip = esp_sntp_getserver(i);
+      if (ipaddr_ntoa_r(ip, buff, INET6_ADDRSTRLEN) != NULL)
+        ESP_LOGI(TAG, "server %d: %s", i, buff);
+    }
+  }
+}
+
+void config_time(void) {
+  ESP_LOGI(TAG, "Initializing SNTP.");
+  esp_sntp_config_t config = ESP_NETIF_SNTP_DEFAULT_CONFIG(CONFIG_SNTP_TIME_SERVER);
+  esp_netif_sntp_init(&config);
+  // print_servers();
+}
+
 void app_main() {
   ESP_LOGI(TAG, "Startup...");
   ESP_LOGI(TAG, "Free memory: %" PRIu32 " bytes", esp_get_free_heap_size());
@@ -151,7 +180,7 @@ void app_main() {
   ESP_ERROR_CHECK(esp_netif_init());
   ESP_ERROR_CHECK(esp_event_loop_create_default());
   ESP_ERROR_CHECK(example_connect());
-
+  config_time();
   mqtt5_app_start();
   xTaskCreate(&DHT_task, "DHT_task", 4096, NULL, 5, NULL);
 }
