@@ -41,7 +41,7 @@ jobs:
            curl -f "http://localhost:8000/metrics?limit=1" || exit 1
 
 
-    - name: Verify FastAPI Ingest and DB 
+    - name: Verify FastAPI Ingest and DB
       run : |
             echo "Sending Ingest Request"
             curl -f -X POST "http://localhost:8000/ingest" \

@@ -8,14 +8,19 @@
 #include "esp_event.h"
 #include "esp_log.h"
 #include "esp_netif.h"
+#include "esp_netif_sntp.h"
+#include "esp_sntp.h"
 #include "esp_system.h"
 #include "esp_task_wdt.h"
 #include "freertos/event_groups.h"
+#include "lwip/ip_addr.h"
 #include "mqtt_client.h"
 #include "nvs_flash.h"
 #include "protocol_examples_common.h"
-
 #define MQTT_TOPIC "Test"
+#ifndef INET6_ADDRSTRLEN
+#define INET6_ADDRSTRLEN 48
+#endif
 
 static const char* TAG = "Project: NodeMCU-32S-Iot";
 
@@ -25,10 +30,11 @@ static esp_mqtt5_user_property_item_t user_property_arr[] = {
     {"board", "esp32"}, {"u", "user"}, {"p", "password"}};
 
 #define USE_PROPERTY_ARR_SIZE sizeof(user_property_arr) / sizeof(esp_mqtt5_user_property_item_t)
+
 void DHT_task(void* pvParameter) {
   static uint16_t seq = 0U;
   setDHTgpio(GPIO_NUM_25);
-  ESP_LOGI(TAG, "Starting DHT Task\n\n");
+  ESP_LOGI(TAG, "Starting DHT Task \n");
   ESP_ERROR_CHECK(esp_task_wdt_add(NULL));
 
   while (1) {
@@ -37,10 +43,12 @@ void DHT_task(void* pvParameter) {
 
     errorHandler(ret);
 
+    /* Get sensor data. */
     float hum = getHumidity();
     float tmp = getTemperature();
     ESP_LOGI(TAG, "Hum: %.1f Tmp: %.1f", hum, tmp);
 
+    /* Get system time. */
     char ts[32];
     time_t now = time(NULL);
     struct tm tm_utc;
@@ -55,9 +63,9 @@ void DHT_task(void* pvParameter) {
 
     if (g_mqtt && g_mqtt_connected && n > 0) {
       int msg_id = esp_mqtt_client_publish(g_mqtt, MQTT_TOPIC, payload, 0, 1, 0);
-      ESP_LOGI(TAG, "MQTT publish [%s] id=%d payload=%s", MQTT_TOPIC, msg_id, payload);
+      ESP_LOGI(TAG, "MQTT published. [%s] id=%d payload=%s", MQTT_TOPIC, msg_id, payload);
     } else {
-      ESP_LOGW(TAG, "MQTT not connected, skip publish");
+      ESP_LOGW(TAG, "MQTT not connected, payload=%s", payload);
     }
     ESP_ERROR_CHECK(esp_task_wdt_reset());
 
@@ -90,7 +98,6 @@ static void mqtt_event_handler(void* handler_args, esp_event_base_t base, int32_
 }
 
 static void mqtt5_app_start(void) {
-  printf("mqtt5_app_start. \r\n");
   esp_mqtt5_connection_property_config_t connect_property = {
       .session_expiry_interval = 10,
       .maximum_packet_size = 1024,
@@ -141,6 +148,21 @@ static void mqtt5_app_start(void) {
   esp_mqtt_client_start(client);
 }
 
+static void config_time(void) {
+  const uint8_t retry_limit = 10U;
+  uint8_t retry_cnt = 0U;
+  ESP_LOGI(TAG, "Initializing SNTP.");
+  esp_sntp_config_t config = ESP_NETIF_SNTP_DEFAULT_CONFIG(CONFIG_SNTP_TIME_SERVER);
+  esp_netif_sntp_init(&config);
+
+  // Add checking time setting status to avoid sending sensor before current time is set to the
+  // system.
+  while (esp_netif_sntp_sync_wait(2000 / portTICK_PERIOD_MS) == ESP_ERR_TIMEOUT &&
+         ++retry_cnt < retry_limit) {
+    ESP_LOGI(TAG, "Waiting for system time to be set... (%d/%d)", retry_cnt, retry_limit);
+  }
+}
+
 void app_main() {
   ESP_LOGI(TAG, "Startup...");
   ESP_LOGI(TAG, "Free memory: %" PRIu32 " bytes", esp_get_free_heap_size());
@@ -151,7 +173,7 @@ void app_main() {
   ESP_ERROR_CHECK(esp_netif_init());
   ESP_ERROR_CHECK(esp_event_loop_create_default());
   ESP_ERROR_CHECK(example_connect());
-
+  config_time();
   mqtt5_app_start();
   xTaskCreate(&DHT_task, "DHT_task", 4096, NULL, 5, NULL);
 }
